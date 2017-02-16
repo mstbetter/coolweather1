@@ -1,0 +1,10 @@
+<litepal>
+    <dbname value="cool_weather"></dbname>
+    <version value="1"></version>
+     <!--将这三个实体类添加到映射列表当中-->
+    <list>
+        <mapping class="com.example.android.db.Province"></mapping>
+        <mapping class="com.example.android.db.City"></mapping>
+        <mapping class="com.example.android.db.County"></mapping>
+    </list>
+</litepal>
