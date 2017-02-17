@@ -7,7 +7,7 @@ import okhttp3.Request;
  * Created by tyj on 2017/2/16.
  */
 
-public class httpUtil {
+public class HttpUtil {
 
     public static  void sendOkhttpRequest(String address,okhttp3.Callback callback){
         OkHttpClient client = new OkHttpClient();
