@@ -13,8 +13,10 @@ public class Now {
     public  More more;
 
 
-    private class More {
+    public class More {
         @SerializedName("txt")
         public String info;
     }
+
+
 }
