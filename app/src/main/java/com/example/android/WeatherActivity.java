@@ -15,6 +15,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.example.android.gson.Forecast;
 import com.example.android.gson.Weather;
 import com.example.android.util.HttpUtil;
@@ -61,13 +62,14 @@ public class WeatherActivity extends AppCompatActivity {
     SwipeRefreshLayout swipeRefresh;
     @BindView(R.id.drawer_layout)
     DrawerLayout drawerLayout;
-    @BindView(R.id.date_text)
+
+
     TextView dateText;
-    @BindView(R.id.info_text)
+
     TextView infoText;
-    @BindView(R.id.max_text)
+
     TextView maxText;
-    @BindView(R.id.min_text)
+
     TextView minText;
 
     @Override
@@ -85,22 +87,61 @@ public class WeatherActivity extends AppCompatActivity {
 
         } else {
             //无缓存时去查询服务器天气
-            String weatherId =getIntent().getStringExtra("weather_id");
+            String weatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(weatherId);
+        }
+
+        String bingPic = prefs.getString("bing_pic", null);
+
+        if (bingPic!=null){
+            Glide.with(this).load(bingPic).into(bingPicImg);
+        }else{
+            loadBingPic();
         }
 
 
     }
 
     /**
+     * 加载必应每日一图
+     */
+    private void loadBingPic() {
+
+        String requestBingPic= "http://guolin.tech/api/bing_pic";
+        HttpUtil.sendOkhttpRequest(requestBingPic, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                final String bingPic = response.body().string();
+                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
+                editor.putString("bing_pic",bingPic);
+                editor.apply();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Glide.with(WeatherActivity.this).load(bingPic).into(bingPicImg);
+                    }
+                });
+
+            }
+        });
+    }
+
+    /**
      * 根据天气id请求城市天气信息
+     *
      * @param weatherId
      */
     private void requestWeather(final String weatherId) {
 
-       String weatherUrl="http://guolin.tech/api/weather?cityid="+
-               weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
+        String weatherUrl = "http://guolin.tech/api/weather?cityid=" +
+                weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
         HttpUtil.sendOkhttpRequest(weatherUrl, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -116,25 +157,25 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
 
-                final String responseText  = response.body().toString();
+                final String responseText = response.body().string();
                 final Weather weather = Utility.handleWeatherResponse(responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (weather!=null && "ok".equals(weather.status) ){
+                        if (weather != null && "ok".equals(weather.status)) {
                             SharedPreferences.Editor editor = PreferenceManager
                                     .getDefaultSharedPreferences(WeatherActivity.this).edit();
-                            editor.putString("weather",responseText);
+                            editor.putString("weather", responseText);
                             editor.apply();
                             showWeatherInfo(weather);
-                        }else{
+                        } else {
 
                         }
                     }
                 });
             }
         });
-
+        loadBingPic();
 
 
     }
@@ -163,7 +204,11 @@ public class WeatherActivity extends AppCompatActivity {
                 ) {
             View view = LayoutInflater.from(this).inflate(R.layout.forecast_item,
                     forecastLayout, false);
-            ButterKnife.bind(view);
+            dateText = (TextView) view.findViewById(R.id.date_text);
+            infoText = (TextView) view.findViewById(R.id.info_text);
+            maxText = (TextView) view.findViewById(R.id.max_text);
+            minText = (TextView) view.findViewById(R.id.min_text);
+
             dateText.setText(forecast.data);
             infoText.setText(forecast.more.info);
             maxText.setText(forecast.temperature.max);
